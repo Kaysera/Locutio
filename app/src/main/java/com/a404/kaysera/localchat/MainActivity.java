@@ -8,15 +8,12 @@ import android.widget.Button;
 import android.widget.TextView;
 
 public class MainActivity extends AppCompatActivity {
-    //Esto es un comment de pruebita
-    //Esto es un comment nuevo porque tengo varios ordenadores
     TextView tv;
-    Button b;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        tv = (TextView) findViewById(R.id.textView);
+        tv = findViewById(R.id.textView);
     }
 
     public void button (View v){

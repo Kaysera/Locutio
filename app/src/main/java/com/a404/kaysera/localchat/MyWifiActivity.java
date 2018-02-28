@@ -25,8 +25,6 @@ public class MyWifiActivity extends AppCompatActivity {
     BroadcastReceiver mReceiver;
     IntentFilter mIntentFilter;
     TextView text;
-    Boolean setIsWifiP2pEnabled;
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -36,14 +34,12 @@ public class MyWifiActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
         text = (TextView) findViewById(R.id.textView2);
 
-
-
+        //Configuracion WifiP2pManager
         mIntentFilter = new IntentFilter();
         mIntentFilter.addAction(WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION);
         mIntentFilter.addAction(WifiP2pManager.WIFI_P2P_PEERS_CHANGED_ACTION);
         mIntentFilter.addAction(WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION);
         mIntentFilter.addAction(WifiP2pManager.WIFI_P2P_THIS_DEVICE_CHANGED_ACTION);
-
 
         mManager = (WifiP2pManager) getSystemService(Context.WIFI_P2P_SERVICE);
         mChannel = mManager.initialize(this, getMainLooper(), null);
@@ -51,36 +47,40 @@ public class MyWifiActivity extends AppCompatActivity {
 
 
 
-
-
-
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                mManager.discoverPeers(mChannel, new WifiP2pManager.ActionListener() {
-                    @Override
-                    public void onSuccess() {
-                        //text.setText("Exito");
-                    }
-
-                    @Override
-                    public void onFailure(int reasonCode) {
-                        if (reasonCode == WifiP2pManager.P2P_UNSUPPORTED){
-                            text.setText("Fallo: Unsupported");
-                        }
-                        if (reasonCode == WifiP2pManager.ERROR){
-                            text.setText("Fallo: ERROR");
-                        }
-                        if (reasonCode == WifiP2pManager.BUSY){
-                            text.setText("Fallo: BUSY");
-                        }
-                    }
-                });
+                search();
             }
         });
 
 
+    }
+
+    /**
+     * Activa la busqueda de dispositivos cercanos
+     */
+    private void search(){
+        mManager.discoverPeers(mChannel, new WifiP2pManager.ActionListener() {
+            @Override
+            public void onSuccess() {
+                Log.v("MyWifiActivity", "Exito");
+            }
+
+            @Override
+            public void onFailure(int reasonCode) {
+                if (reasonCode == WifiP2pManager.P2P_UNSUPPORTED){
+                    Log.v("MyWifiActivity", "Unsupported");
+                }
+                if (reasonCode == WifiP2pManager.ERROR){
+                    Log.v("MyWifiActivity", "ERROR");
+                }
+                if (reasonCode == WifiP2pManager.BUSY){
+                    Log.v("MyWifiActivity", "BUSY");
+                }
+            }
+        });
     }
 
     @Override
@@ -97,13 +97,17 @@ public class MyWifiActivity extends AppCompatActivity {
 
     public void setIsWifiP2pEnabled(boolean isWifiP2pEnabled) {
         if (isWifiP2pEnabled){
-            //text.setText("Habilitado");
+            Log.v("MyWifiActivity", "WifiP2p Enabled");
         }else{
-            //text.setText("No habilitado");
+            Log.v("MyWifiActivity", "WifiP2p Not Enabled");
         }
     }
 
-    public void setPeersChanged(WifiP2pDeviceList peers) {
+    /**
+     * Cuando cambia de alguna manera la lista de peers
+     * @param peers Lista de dispositivos cercanos
+     */
+    public void onPeersChanged(WifiP2pDeviceList peers) {
         Collection<WifiP2pDevice> mycollection = peers.getDeviceList();
         String s = "";
        for (WifiP2pDevice dev : mycollection){

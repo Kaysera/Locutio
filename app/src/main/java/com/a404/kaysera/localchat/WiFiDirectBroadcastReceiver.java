@@ -24,9 +24,6 @@ public class WiFiDirectBroadcastReceiver extends BroadcastReceiver {
     private WifiP2pManager mManager;
     private WifiP2pManager.Channel mChannel;
     private MyWifiActivity mActivity;
-    TextView myText;
-    private Collection<WifiP2pDevice> peers = new ArrayList<WifiP2pDevice>();
-    private WifiP2pManager.PeerListListener peerListListener;
 
     public WiFiDirectBroadcastReceiver(WifiP2pManager manager, WifiP2pManager.Channel channel,
                                        MyWifiActivity activity) {
@@ -34,13 +31,11 @@ public class WiFiDirectBroadcastReceiver extends BroadcastReceiver {
         this.mManager = manager;
         this.mChannel = channel;
         this.mActivity = activity;
-        myText = mActivity.findViewById(R.id.textView2);
     }
 
     @Override
     public void onReceive(Context context, Intent intent) {
         String action = intent.getAction();
-        //myText.setText("Recibo cosicas");
         if (WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION.equals(action)) {
             // Determine if Wifi P2P mode is enabled or not, alert
             // the Activity.
@@ -53,10 +48,9 @@ public class WiFiDirectBroadcastReceiver extends BroadcastReceiver {
         } else if (WifiP2pManager.WIFI_P2P_PEERS_CHANGED_ACTION.equals(action)) {
             if (mManager != null) {
                 mManager.requestPeers(mChannel, new WifiP2pManager.PeerListListener() {
-
                     @Override
                     public void onPeersAvailable(WifiP2pDeviceList peers) {
-                        mActivity.setPeersChanged(peers);
+                        mActivity.onPeersChanged(peers);
                         // DO WHATEVER YOU WANT HERE
                         // YOU CAN GET ACCESS TO ALL THE DEVICES YOU FOUND FROM peers OBJECT
 

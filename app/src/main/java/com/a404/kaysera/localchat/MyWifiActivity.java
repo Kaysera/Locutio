@@ -13,6 +13,9 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.ListView;
 import android.widget.TextView;
 
 import java.util.ArrayList;
@@ -20,11 +23,20 @@ import java.util.Collection;
 import java.util.List;
 
 public class MyWifiActivity extends AppCompatActivity {
-    WifiP2pManager mManager;
-    WifiP2pManager.Channel mChannel;
-    BroadcastReceiver mReceiver;
-    IntentFilter mIntentFilter;
-    TextView text;
+    public static final String TAG = "wifidirectdemo";
+    private WifiP2pManager manager;
+    private boolean isWifiP2pEnabled = false;
+    private ArrayList<WifiP2pDevice> deviceList = new ArrayList<>();
+    private final IntentFilter intentFilter = new IntentFilter();
+    private WifiP2pManager.Channel channel;
+    private BroadcastReceiver receiver = null;
+
+    /**
+     * @param isWifiP2pEnabled the isWifiP2pEnabled to set
+     */
+    public void setIsWifiP2pEnabled(boolean isWifiP2pEnabled) {
+        this.isWifiP2pEnabled = isWifiP2pEnabled;
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -32,20 +44,15 @@ public class MyWifiActivity extends AppCompatActivity {
         setContentView(R.layout.activity_my_wifi);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-        text = (TextView) findViewById(R.id.textView2);
 
         //Configuracion WifiP2pManager
-        mIntentFilter = new IntentFilter();
-        mIntentFilter.addAction(WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION);
-        mIntentFilter.addAction(WifiP2pManager.WIFI_P2P_PEERS_CHANGED_ACTION);
-        mIntentFilter.addAction(WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION);
-        mIntentFilter.addAction(WifiP2pManager.WIFI_P2P_THIS_DEVICE_CHANGED_ACTION);
+        intentFilter.addAction(WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION);
+        intentFilter.addAction(WifiP2pManager.WIFI_P2P_PEERS_CHANGED_ACTION);
+        intentFilter.addAction(WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION);
+        intentFilter.addAction(WifiP2pManager.WIFI_P2P_THIS_DEVICE_CHANGED_ACTION);
 
-        mManager = (WifiP2pManager) getSystemService(Context.WIFI_P2P_SERVICE);
-        mChannel = mManager.initialize(this, getMainLooper(), null);
-        mReceiver = new WiFiDirectBroadcastReceiver(mManager, mChannel, this);
-
-
+        manager = (WifiP2pManager) getSystemService(Context.WIFI_P2P_SERVICE);
+        channel = manager.initialize(this, getMainLooper(), null);
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
@@ -55,14 +62,53 @@ public class MyWifiActivity extends AppCompatActivity {
             }
         });
 
+    }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        receiver = new WiFiDirectBroadcastReceiver(manager, channel, this);
+        registerReceiver(receiver, intentFilter);
+    }
+
+    @Override
+    protected void onPause(){
+        super.onPause();
+        unregisterReceiver(receiver);
+    }
+
+
+    /**
+     * Cuando cambia de alguna manera la lista de peers
+     * @param peers Lista de dispositivos cercanos
+     */
+    public void onPeersChanged(ArrayList peers) {
+        deviceList = peers;
+        ArrayList<String> names = new ArrayList<>();
+        for (WifiP2pDevice wd : deviceList){
+            names.add(wd.deviceName);
+        }
+        Log.v("MyWifiActivity", "Peers changed");
+        ListView lista = (ListView)findViewById(R.id.DeviceList);
+        ArrayAdapter<String> adaptador;
+        adaptador = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, names);
+        lista.setAdapter(adaptador);
+        lista.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                final int pos = position;
+                Log.d("Lista", ""+pos);
+                //CODIGO AQUI
+
+            }
+        });
     }
 
     /**
      * Activa la busqueda de dispositivos cercanos
      */
     private void search(){
-        mManager.discoverPeers(mChannel, new WifiP2pManager.ActionListener() {
+        manager.discoverPeers(channel, new WifiP2pManager.ActionListener() {
             @Override
             public void onSuccess() {
                 Log.v("MyWifiActivity", "Exito");
@@ -81,38 +127,5 @@ public class MyWifiActivity extends AppCompatActivity {
                 }
             }
         });
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        registerReceiver(mReceiver, mIntentFilter);
-    }
-
-    @Override
-    protected void onPause(){
-        super.onPause();
-        unregisterReceiver(mReceiver);
-    }
-
-    public void setIsWifiP2pEnabled(boolean isWifiP2pEnabled) {
-        if (isWifiP2pEnabled){
-            Log.v("MyWifiActivity", "WifiP2p Enabled");
-        }else{
-            Log.v("MyWifiActivity", "WifiP2p Not Enabled");
-        }
-    }
-
-    /**
-     * Cuando cambia de alguna manera la lista de peers
-     * @param peers Lista de dispositivos cercanos
-     */
-    public void onPeersChanged(WifiP2pDeviceList peers) {
-        Collection<WifiP2pDevice> mycollection = peers.getDeviceList();
-        String s = "";
-       for (WifiP2pDevice dev : mycollection){
-           s+=dev.deviceName;
-       }
-       text.setText(s);
     }
 }
